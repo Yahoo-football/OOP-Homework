@@ -14,6 +14,16 @@ app.get("/", (_req, res) => {
     });
 });
 app.use("/users", userRoutes_1.userRoutes);
+app.use((err, _req, res, _next) => {
+    console.error(err);
+    let statusCode = 500;
+    let message = "Internal server error";
+    if (err.statusCode) {
+        statusCode = err.statusCode;
+        message = err.message;
+    }
+    res.status(statusCode).json({ message });
+});
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });

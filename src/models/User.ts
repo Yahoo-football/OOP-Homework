@@ -1,73 +1,44 @@
-import { ResultSetHeader, RowDataPacket } from "mysql2";
 import Database from "../config/db";
+import { ResultSetHeader } from "mysql2";
 
-export interface UserData {
-  id?: number;
-  name: string;
-  email: string;
-}
-
-interface UserRow extends RowDataPacket {
+class UserModel {
   id: number;
   name: string;
   email: string;
-}
 
-export class User {
-  id?: number;
-  name: string;
-  email: string;
-
-  constructor({ id, name, email }: UserData) {
+  constructor(id: number, name: string, email: string) {
     this.id = id;
     this.name = name;
     this.email = email;
   }
 
-  static async getAll(): Promise<User[]> {
-    const [rows] = await Database.pool.query<UserRow[]>("SELECT * FROM users");
-
-    return rows.map(({ id, name, email }) => new User({ id, name, email }));
+  static async index(): Promise<UserModel[]> {
+    const [rows] = await Database.pool.query("SELECT * FROM users");
+    return (rows as any[]).map(
+      (row) => new UserModel(row.id, row.name, row.email)
+    );
   }
 
-  static async getById(id: number): Promise<User | null> {
-    const [rows] = await Database.pool.query<UserRow[]>(
+  static async findById(id: number): Promise<UserModel | null> {
+    const [rows] = await Database.pool.query(
       "SELECT * FROM users WHERE id = ?",
       [id]
     );
-
-    const [user] = rows;
-
-    if (!user) {
-      return null;
-    }
-
-    return new User({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    });
+    const user = (rows as any[])[0];
+    return user ? new UserModel(user.id, user.name, user.email) : null;
   }
 
-  static async create(userData: UserData): Promise<User> {
-    const { name, email } = userData;
-
-    const [result] = await Database.pool.execute<ResultSetHeader>(
+  static async create(name: string, email: string): Promise<UserModel> {
+    const [result] = await Database.pool.query<ResultSetHeader>(
       "INSERT INTO users (name, email) VALUES (?, ?)",
       [name, email]
     );
 
-    return new User({
-      id: result.insertId,
-      name,
-      email,
-    });
+    return new UserModel(result.insertId, name, email);
   }
 
-  static async update(id: number, userData: UserData): Promise<User | null> {
-    const { name, email } = userData;
-
-    const [result] = await Database.pool.execute<ResultSetHeader>(
+  static async update(id: number, name: string, email: string): Promise<UserModel | null> {
+    const [result] = await Database.pool.query<ResultSetHeader>(
       "UPDATE users SET name = ?, email = ? WHERE id = ?",
       [name, email, id]
     );
@@ -76,11 +47,11 @@ export class User {
       return null;
     }
 
-    return new User({ id, name, email });
+    return new UserModel(id, name, email);
   }
 
   static async delete(id: number): Promise<boolean> {
-    const [result] = await Database.pool.execute<ResultSetHeader>(
+    const [result] = await Database.pool.query<ResultSetHeader>(
       "DELETE FROM users WHERE id = ?",
       [id]
     );
@@ -88,3 +59,5 @@ export class User {
     return result.affectedRows > 0;
   }
 }
+
+export default UserModel;

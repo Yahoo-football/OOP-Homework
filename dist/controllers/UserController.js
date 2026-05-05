@@ -1,69 +1,55 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserController = void 0;
-const User_1 = require("../models/User");
-class UserController {
-    static async getAllUsers(_req, res) {
+const baseController_1 = require("./baseController");
+const userService_1 = __importDefault(require("../services/userService"));
+class UserController extends baseController_1.BaseController {
+    async getAll(_req, res, next) {
         try {
-            const users = await User_1.User.getAll();
-            res.json(users);
+            const users = await userService_1.default.getAll();
+            this.sendSuccess(res, users);
         }
         catch (error) {
-            res.status(500).json({ message: "Cannot get users", error });
+            next(error);
         }
     }
-    static async getUserById(req, res) {
+    async getById(req, res, next) {
         try {
-            const id = Number(req.params.id);
-            const user = await User_1.User.getById(id);
-            if (!user) {
-                res.status(404).json({ message: "User not found" });
-                return;
-            }
-            res.json(user);
+            const user = await userService_1.default.findById(req.params.id);
+            this.sendSuccess(res, user);
         }
         catch (error) {
-            res.status(500).json({ message: "Cannot get user", error });
+            next(error);
         }
     }
-    static async createUser(req, res) {
+    async create(req, res, next) {
         try {
-            const { name, email } = req.body;
-            const user = await User_1.User.create({ name, email });
-            res.status(201).json(user);
+            const user = await userService_1.default.create(req.body);
+            this.sendSuccess(res, user, 201);
         }
         catch (error) {
-            res.status(500).json({ message: "Cannot create user", error });
+            next(error);
         }
     }
-    static async updateUser(req, res) {
+    async update(req, res, next) {
         try {
-            const id = Number(req.params.id);
-            const { name, email } = req.body;
-            const user = await User_1.User.update(id, { name, email });
-            if (!user) {
-                res.status(404).json({ message: "User not found" });
-                return;
-            }
-            res.json(user);
+            const user = await userService_1.default.update(req.params.id, req.body);
+            this.sendSuccess(res, user);
         }
         catch (error) {
-            res.status(500).json({ message: "Cannot update user", error });
+            next(error);
         }
     }
-    static async deleteUser(req, res) {
+    async delete(req, res, next) {
         try {
-            const id = Number(req.params.id);
-            const deleted = await User_1.User.delete(id);
-            if (!deleted) {
-                res.status(404).json({ message: "User not found" });
-                return;
-            }
-            res.json({ message: "Delete success" });
+            await userService_1.default.delete(req.params.id);
+            this.sendSuccess(res, { message: "User deleted" });
         }
         catch (error) {
-            res.status(500).json({ message: "Cannot delete user", error });
+            next(error);
         }
     }
 }
-exports.UserController = UserController;
+exports.default = new UserController();

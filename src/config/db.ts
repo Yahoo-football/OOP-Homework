@@ -7,8 +7,6 @@ class Database {
     user: "root",
     password: "",
     database: "test",
-    waitForConnections: true,
-    connectionLimit: 10,
   });
 }
 

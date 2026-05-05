@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { userRoutes } from "./routes/userRoutes";
 
 const app = express();
@@ -13,6 +13,20 @@ app.get("/", (_req, res) => {
 });
 
 app.use("/users", userRoutes);
+
+app.use((err: Error & { statusCode?: number }, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(err);
+
+  let statusCode = 500;
+  let message = "Internal server error";
+
+  if (err.statusCode) {
+    statusCode = err.statusCode;
+    message = err.message;
+  }
+
+  res.status(statusCode).json({ message });
+});
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

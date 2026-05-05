@@ -12,7 +12,5 @@ Database.pool = promise_1.default.createPool({
     user: "root",
     password: "",
     database: "test",
-    waitForConnections: true,
-    connectionLimit: 10,
 });
 exports.default = Database;

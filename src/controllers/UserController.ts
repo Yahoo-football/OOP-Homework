@@ -1,73 +1,51 @@
-import { Request, Response } from "express";
-import { User } from "../models/User";
+import { NextFunction, Request, Response } from "express";
+import { BaseController } from "./baseController";
+import UserService from "../services/userService";
 
-export class UserController {
-  static async getAllUsers(_req: Request, res: Response): Promise<void> {
+class UserController extends BaseController {
+  async getAll(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const users = await User.getAll();
-      res.json(users);
+      const users = await UserService.getAll();
+      this.sendSuccess(res, users);
     } catch (error) {
-      res.status(500).json({ message: "Cannot get users", error });
+      next(error);
+    }
+  }
+  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = await UserService.findById(req.params.id);
+      this.sendSuccess(res, user);
+    } catch (error) {
+      next(error);
     }
   }
 
-  static async getUserById(req: Request, res: Response): Promise<void> {
+  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const id = Number(req.params.id);
-      const user = await User.getById(id);
-
-      if (!user) {
-        res.status(404).json({ message: "User not found" });
-        return;
-      }
-
-      res.json(user);
+      const user = await UserService.create(req.body);
+      this.sendSuccess(res, user, 201);
     } catch (error) {
-      res.status(500).json({ message: "Cannot get user", error });
+      next(error);
     }
   }
 
-  static async createUser(req: Request, res: Response): Promise<void> {
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { name, email } = req.body;
-      const user = await User.create({ name, email });
-
-      res.status(201).json(user);
+      const user = await UserService.update(req.params.id, req.body);
+      this.sendSuccess(res, user);
     } catch (error) {
-      res.status(500).json({ message: "Cannot create user", error });
+      next(error);
     }
   }
 
-  static async updateUser(req: Request, res: Response): Promise<void> {
+  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const id = Number(req.params.id);
-      const { name, email } = req.body;
-      const user = await User.update(id, { name, email });
-
-      if (!user) {
-        res.status(404).json({ message: "User not found" });
-        return;
-      }
-
-      res.json(user);
+      await UserService.delete(req.params.id);
+      this.sendSuccess(res, { message: "User deleted" });
     } catch (error) {
-      res.status(500).json({ message: "Cannot update user", error });
-    }
-  }
-
-  static async deleteUser(req: Request, res: Response): Promise<void> {
-    try {
-      const id = Number(req.params.id);
-      const deleted = await User.delete(id);
-
-      if (!deleted) {
-        res.status(404).json({ message: "User not found" });
-        return;
-      }
-
-      res.json({ message: "Delete success" });
-    } catch (error) {
-      res.status(500).json({ message: "Cannot delete user", error });
+      next(error);
     }
   }
 }
+
+export default new UserController();
